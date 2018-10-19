@@ -18,8 +18,8 @@ void USART_Init(unsigned int baud)
 void USART_Flush(void)
 {
 	unsigned char flushData;
-	//Flush Data from Recieve Register
-	while(!(UCSRA & (1 << UDRE)){
+	//Flush Data from Recieve Register))
+	while(!(UCSRA & (1 << UDRE))){
 		flushData = UDR;
 	} 
 }
@@ -36,7 +36,7 @@ unsigned char USART_Read(void)
 void USART_Write(unsigned char data)
 {
 	//Wait for the Transmit Buffer to empty
-	while(!(UCSRA & (1 << UDRE));
+	while(!(UCSRA & (1 << UDRE)));
 	//Move the Data into the Transmit Buffer
 	UDR = data;
 
