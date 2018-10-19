@@ -33,9 +33,16 @@ int EEPROM_Read(void)
     return 0;
 }
 
-int EEPROM_Write(void)
+void EEPROM_Write(unsigned int address, unsigned char data)
 {
-    return 0;
+	while (EECR & (1<<EEWE));	//Wait for completion of previous write
+
+	EEAR = address;			//Set up address and data registers
+	EEDR = data;
+
+	EECR |= (1<<EEMWE);		//Enable Master Write Enable
+
+	EECR |= (1<<EEWE);		//Enable Write Enable
 }
 
 int main(void)
