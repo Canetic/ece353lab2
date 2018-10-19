@@ -29,7 +29,7 @@ int main(void)
     DDRB = 0xFF;                //Set PORTB as output
     DDRD |= (1 << PORTD1);
     TCCR1A |= (1 << CS12);        //Timer1A prescale by 256
-    TIMSK |= (1 << TOIE1);
+    
     sei();
 
     while(1){
