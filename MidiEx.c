@@ -3,6 +3,21 @@
 #include <avr/portpins.h>
 #include <avr/delay.h>
 
+void USART_Init(unsigned int baud)
+{
+	UCSRC = 0;
+	//Set the baud rate
+	UBRRH = (unsigned char)(baud >> 8);
+	UBRRL = (unsigned char)(baud);
+	
+	//Enable the Reciever and Transmitter
+	UCSRB |= (1 << RXEN) | (1 << TXEN);
+
+	//Set the Frame Format: 8 Data| 1 Stop| 0 Parity
+	UCSRC |= (3 << UCSZ0);
+	UCSRC &= ~(1 << URSEL);
+}
+
 int USART_Read(void)
 {
     return 0;
@@ -29,7 +44,7 @@ int main(void)
     DDRB = 0xFF;                //Set PORTB as output
     DDRD |= (1 << PORTD1);
     TCCR1A |= (1 << CS12);        //Timer1A prescale by 256
-    
+    USART_Init(0x7);            //Initialize the USART with Baud Rate 31,250bps
     sei();
 
     while(1){
