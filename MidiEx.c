@@ -9,23 +9,37 @@ void USART_Init(unsigned int baud)
 	//Set the baud rate
 	UBRRH = (unsigned char)(baud >> 8);
 	UBRRL = (unsigned char)(baud);
-	
-	//Enable the Reciever and Transmitter
-	UCSRB |= (1 << RXEN) | (1 << TXEN);
 
 	//Set the Frame Format: 8 Data| 1 Stop| 0 Parity
 	UCSRC |= (3 << UCSZ0);
 	UCSRC &= ~(1 << URSEL);
 }
 
-int USART_Read(void)
+void USART_Flush(void)
 {
-    return 0;
+	unsigned char flushData;
+	//Flush Data from Recieve Register
+	while(!(UCSRA & (1 << UDRE)){
+		flushData = UDR;
+	} 
 }
 
-int USART_Write(void)
+unsigned char USART_Read(void)
 {
-    return 0;
+	//Wait for USART to finish recieving
+	while(!(UCSRA & (1 << RXC)));
+	//Return data when done
+	return UDR;
+
+}
+
+void USART_Write(unsigned char data)
+{
+	//Wait for the Transmit Buffer to empty
+	while(!(UCSRA & (1 << UDRE));
+	//Move the Data into the Transmit Buffer
+	UDR = data;
+
 }
 
 int EEPROM_Read(void)
@@ -55,21 +69,31 @@ int main(void)
     sei();
 
     while(1){
-        //If Recording
-        if(PINA & (1 << PINA0)){
-            USART_Read();
-            EEPROM_Write();
-        }
-        //If Playing
-        if(PINA & (1 << PINA1)){
-            EEPROM_Read();
-            //If Modify is on
-            if(PINA & (1 << PINA2)){
-             
-            }
-            
-            USART_Write();
-        }
-    }
+		//If Recording
+		if(PINA & (1 << PINA0)){
+			//Enable USART Reciever
+			UCSRB |= (1 << RXEN);
+			//Write to EEPROM Data from USART
+			EEPROM_Write(USART_Read());
+			//Disable USART Reciever
+			UCSRB &= ~(1 << RXEN); 
+		}
+		//If Playing
+		if(PINA & (1 << PINA1)){
+			unsigned int data;
+			//Enable USART Transmitter
+			UCSRB |= (1 << TXEN);
+			//Read Data from EEPROM
+			data = EEPROM_Read();
+			//If Modify is on
+			if(PINA & (1 << PINA2)){
+				
+			}
+			//Transmit Data
+			USART_Write(data);
+			//Disable USART Transmitter
+			UCSRB &= ~(1 << TXEN);
+		}
+	}
     return 0;
 }
