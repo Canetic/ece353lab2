@@ -43,9 +43,9 @@ int main(void)
             EEPROM_Read();
             //If Modify is on
             if(PINA & (1 << PINA2)){
-                ADCSRA |= (1 << ADEN) | (1 << ADSC);
+             
             }
-            ADCSRA &= ~((1 << ADEN) | (1 << ADSC));
+            
             USART_Write();
         }
     }
