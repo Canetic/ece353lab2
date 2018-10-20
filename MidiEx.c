@@ -83,15 +83,6 @@ int main(void)
     USART_Init(0x7);            //Initialize the USART with Baud Rate 31,250bps
     sei();
 
-int main(void)
-{
-    DDRA = 0;                    //Set PortA as input    
-    DDRB = 0xFF;                //Set PORTB as output
-    DDRD |= (1 << PORTD1);
-    TCCR1A |= (1 << CS12);        //Timer1A prescale by 256
-    USART_Init(0x7);            //Initialize the USART with Baud Rate 31,250bps
-    sei();
-
     while(1){
 		//If Recording
 		if(PINA & (1 << REC)){
