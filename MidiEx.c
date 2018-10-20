@@ -42,20 +42,20 @@ void USART_Write(unsigned char data)
 
 }
 
-int EEPROM_Read(void)
+unsigned char EEPROM_Read(unsigned int address)
 {
-    return 0;
+	while(EECR & (1<<EEWE));	//Wait for completion of previous write
+	EEAR = address; 		//Set up address register
+	EECR |= (1<<EERE);		//Start EEPROM read
+	return EEDR;			//Return data
 }
 
 void EEPROM_Write(unsigned int address, unsigned char data)
 {
 	while (EECR & (1<<EEWE));	//Wait for completion of previous write
-
 	EEAR = address;			//Set up address and data registers
 	EEDR = data;
-
 	EECR |= (1<<EEMWE);		//Enable Master Write Enable
-
 	EECR |= (1<<EEWE);		//Enable Write Enable
 }
 
