@@ -18,6 +18,7 @@ void USART_Init(unsigned int baud)
 	UCSRC |= (1 << URSEL);
 	//Set the Frame Format: 8 Data| 1 Stop| 0 Parity
 	UCSRC |= (3 << UCSZ0);
+	UCSRB |= (1 << RXEN) | (1 << TXEN);
 	UCSRC &= ~(1 << URSEL);
 }
 
