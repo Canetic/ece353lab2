@@ -3,31 +3,45 @@
 #include <avr/portpins.h>
 #include <avr/delay.h>
 
+#define REC 	PINA0	//PINA0 = Record Switch
+#define PLAY	PINA1	//PINA1 = Playback Switch
+#define MOD	PINA2	//PINA2 = Modify Switch
+#define PHRES1	PINA7	//PINA7 = Photoresistor 1
+#define PHRES2	PINA6	//PINA6 = Photoresistor 2
+
 void USART_Init(unsigned int baud)
 {
 	UCSRC = 0;
 	//Set the baud rate
 	UBRRH = (unsigned char)(baud >> 8);
 	UBRRL = (unsigned char)(baud);
-
+	UCSRC |= (1 << URSEL);
 	//Set the Frame Format: 8 Data| 1 Stop| 0 Parity
 	UCSRC |= (3 << UCSZ0);
 	UCSRC &= ~(1 << URSEL);
 }
 
-void USART_Flush(void)
+unsigned char USART_Flush(void)
 {
 	unsigned char flushData;
 	//Flush Data from Recieve Register))
-	while(!(UCSRA & (1 << UDRE))){
+	while(UCSRA & (1 << RXC)){
 		flushData = UDR;
-	} 
+	}
+	PORTB = UDR;
+	return flushData;
 }
 
 unsigned char USART_Read(void)
-{
+{	
+	PORTB = 0;
 	//Wait for USART to finish recieving
-	while(!(UCSRA & (1 << RXC)));
+	while(!(UCSRA & (1 << RXC))){
+		if(!(PINA & (1 << REC))){
+			UCSRB &= ~(1 << RXEN);
+			return USART_Flush();
+		} 
+	}
 	//Return data when done
 	return UDR;
 
@@ -68,25 +82,34 @@ int main(void)
     USART_Init(0x7);            //Initialize the USART with Baud Rate 31,250bps
     sei();
 
+int main(void)
+{
+    DDRA = 0;                    //Set PortA as input    
+    DDRB = 0xFF;                //Set PORTB as output
+    DDRD |= (1 << PORTD1);
+    TCCR1A |= (1 << CS12);        //Timer1A prescale by 256
+    USART_Init(0x7);            //Initialize the USART with Baud Rate 31,250bps
+    sei();
+
     while(1){
 		//If Recording
-		if(PINA & (1 << PINA0)){
+		if(PINA & (1 << REC)){
 			//Enable USART Reciever
 			UCSRB |= (1 << RXEN);
 			//Write to EEPROM Data from USART
-			EEPROM_Write(USART_Read());
+			EEPROM_Write(0x0,USART_Read());
 			//Disable USART Reciever
 			UCSRB &= ~(1 << RXEN); 
 		}
 		//If Playing
-		if(PINA & (1 << PINA1)){
+		if(PINA & (1 << PLAY)){
 			unsigned int data;
 			//Enable USART Transmitter
 			UCSRB |= (1 << TXEN);
 			//Read Data from EEPROM
-			data = EEPROM_Read();
+			data = EEPROM_Read(0x0);
 			//If Modify is on
-			if(PINA & (1 << PINA2)){
+			if(PINA & (1 << MOD)){
 				
 			}
 			//Transmit Data
