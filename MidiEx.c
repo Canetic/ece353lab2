@@ -8,18 +8,26 @@
 #define MOD	PINA2	//PINA2 = Modify Switch
 #define PHRES1	PINA7	//PINA7 = Photoresistor 1
 #define PHRES2	PINA6	//PINA6 = Photoresistor 2
+#define F_CPU 	4000000			//Define Clock Speed
+#define BAUD	31250			//Define Baud Rate
+#define UBRR	(F_CPU/16/BAUD)-1	//Cacluate UBRR Value
 
-void USART_Init(unsigned int baud)
+USART_Init()
 {
 	UCSRC = 0;
-	//Set the baud rate
-	UBRRH = (unsigned char)(baud >> 8);
-	UBRRL = (unsigned char)(baud);
-	UCSRC |= (1 << URSEL);
-	//Set the Frame Format: 8 Data| 1 Stop| 0 Parity
-	UCSRC |= (3 << UCSZ0);
-	UCSRB |= (1 << RXEN) | (1 << TXEN);
-	UCSRC &= ~(1 << URSEL);
+	//Enable the Transmitter and Reciever
+	UCSRB = (1 << RXEN)|(1 << TXEN);
+
+	//Select the UCSRC register
+	//Set the Frame to 8 bits| 0 parity| 1 stop bit
+	UCSRC |= (1 << URSEL)|(3 << UCSZ0);
+
+	//Select the UBRRH register
+	UBRRH &= ~(1 <<URSEL);
+	
+	//Set the Baud Rate registers
+	UBRRH |= (unsigned char)(UBRR >> 8);
+	UBRRL |= (unsigned char)(UBRR);
 }
 
 unsigned char USART_Flush(void)
@@ -34,24 +42,22 @@ unsigned char USART_Flush(void)
 }
 
 unsigned char USART_Read(void)
-{	
-	PORTB = 0;
-	//Wait for USART to finish recieving
+{
+	//Wait for the recieve to complete
 	while(!(UCSRA & (1 << RXC))){
 		if(!(PINA & (1 << REC))){
 			UCSRB &= ~(1 << RXEN);
 			return USART_Flush();
 		} 
 	}
-	//Return data when done
+	//Return what was recieved
 	return UDR;
-
 }
 
 void USART_Write(unsigned char data)
 {
 	//Wait for the Transmit Buffer to empty
-	while(!(UCSRA & (1 << UDRE)));
+	while(!(UCSRA & (1 << UDRE)))
 	//Move the Data into the Transmit Buffer
 	UDR = data;
 
@@ -82,22 +88,20 @@ int main(void)
     TCCR1A |= (1 << CS12);        //Timer1A prescale by 256
     USART_Init(0x7);            //Initialize the USART with Baud Rate 31,250bps
     sei();
-
+	unsigned char data;
+	
     while(1){
 		//If Recording
 		if(PINA & (1 << REC)){
-			//Enable USART Reciever
-			UCSRB |= (1 << RXEN);
+			
 			//Write to EEPROM Data from USART
-			EEPROM_Write(0x0,USART_Read());
-			//Disable USART Reciever
-			UCSRB &= ~(1 << RXEN); 
+			EEPROM_Write(0x0,USART_Read()); 
+			
 		}
 		//If Playing
 		if(PINA & (1 << PLAY)){
-			unsigned int data;
-			//Enable USART Transmitter
-			UCSRB |= (1 << TXEN);
+			
+			
 			//Read Data from EEPROM
 			data = EEPROM_Read(0x0);
 			//If Modify is on
@@ -106,8 +110,7 @@ int main(void)
 			}
 			//Transmit Data
 			USART_Write(data);
-			//Disable USART Transmitter
-			UCSRB &= ~(1 << TXEN);
+		
 		}
 	}
     return 0;
