@@ -1,23 +1,23 @@
 #include <io.h>
 #include <avr/interrupt.h>
 #include <avr/portpins.h>
-#include <avr/delay.h>
+#include <util/delay.h>
 
 #define REC 	PINA0	//PINA0 = Record Switch
 #define PLAY	PINA1	//PINA1 = Playback Switch
 #define MOD	PINA2	//PINA2 = Modify Switch
 #define PHRES1	PINA7	//PINA7 = Photoresistor 1
 #define PHRES2	PINA6	//PINA6 = Photoresistor 2
-#define F_CPU 	4000000			//Define Clock Speed
+#define F_CLK 	4000000			//Define Clock Speed
 #define BAUD	31250			//Define Baud Rate
-#define UBRR	(F_CPU/16/BAUD)-1	//Cacluate UBRR Value
+#define UBRR	(F_CLK/16/BAUD)-1	//Cacluate UBRR Value
 
-USART_Init()
+void USART_Init()
 {
 	UCSRC = 0;
 	//Enable the Transmitter and Reciever
 	UCSRB = (1 << RXEN)|(1 << TXEN);
-
+	
 	//Select the UCSRC register
 	//Set the Frame to 8 bits| 0 parity| 1 stop bit
 	UCSRC |= (1 << URSEL)|(3 << UCSZ0);
@@ -26,7 +26,7 @@ USART_Init()
 	UBRRH &= ~(1 <<URSEL);
 	
 	//Set the Baud Rate registers
-	UBRRH |= (unsigned char)(UBRR >> 8);
+	UBRRH |= (unsigned char)((UBRR) >> 8);
 	UBRRL |= (unsigned char)(UBRR);
 }
 
