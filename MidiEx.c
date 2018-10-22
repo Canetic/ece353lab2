@@ -80,6 +80,29 @@ void EEPROM_Write(unsigned int address, unsigned char data)
 	EECR |= (1<<EEWE);		//Enable Write Enable
 }
 
+int ReadADC(unsigned int ch)
+{
+	// Reference voltage = AVCC
+	ADMUX=(1<<REFS0);
+
+	// Selects prescaler division factor to 32
+	ADCSRA=(1<<ADEN)|(7<<ADPS0);
+
+	// Selects ADC channel
+	ADMUX|=ch;
+
+	// single conversion
+	ADCSRA|=(1<<ADSC);
+
+	// wait for conversion to complete
+	while(!(ADCSRA & (1 << ADIF)));
+
+	// Clear ADIF by writing 1 into it
+	ADCSRA|=(1<<ADIF);
+
+	return (ADC);
+}
+
 int main(void)
 {
     DDRA = 0;                    //Set PortA as input    
@@ -114,31 +137,4 @@ int main(void)
 		}
 	}
     return 0;
-}
-
-int ReadADC(unsigned int ch)
-{
-	// Reference voltage = AVCC
-	ADMUX=(1<<REFS0);
-
-	// Selects prescaler division factor to 32
-	ADCSRA=(1<<ADEN)|(5<<ADPS0);
-
-	// Sets port A as input
-	DDRA=0;	
-
-	// Selects ADC channel to be pin 7
-	ch=PINA7;
-	ADMUX|=ch;
-
-	// single conversion
-	ADCSRA|=(1<<ADSC);
-
-	// wait for conversion to complete
-	while(!(ADCSRA & (1<<ADIF)));
-
-	// Clear ADIF by writing 1 into it
-	ADCSRA|=(1<<ADIF);
-
-	return (ADC);
 }
