@@ -8,10 +8,10 @@
 #define BAUD	31250
 #define UBRR	(F_CPU/16/BAUD)-1
 
-ISR(USART_RXC_vect)
+
+ISR(TIMER1_COMPA_vect)	//Interrupt for TCNT1=OCR1A=0.8ms
 {
-	PORTB = UDR;
-	_delay_ms(500);
+	PORTB = 0;		//Turn LEDS off
 }
 
 USART_Init()
