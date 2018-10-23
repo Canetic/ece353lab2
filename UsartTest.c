@@ -34,6 +34,15 @@ unsigned char USART_Read(void)
 	return UDR;
 }
 
+void USART_Write(unsigned char data)
+{
+	//Wait for the Transmit Buffer to empty
+	while(!(UCSRA & (1 << UDRE)))
+	//Move the Data into the Transmit Buffer
+	UDR = data;
+
+}
+
 int main(void)
 {
 	DDRB = 0xFF;
