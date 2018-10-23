@@ -4,6 +4,7 @@
 #include <avr/delay.h>
 
 #define REC 	PINA0		//PINA0 = Record Switch
+#define PLAY	PINA1		//PINA1 = Playback Switch
 #define F_CPU 	4000000
 #define BAUD	31250
 #define UBRR	(F_CPU/16/BAUD)-1
@@ -40,12 +41,28 @@ int main(void)
 	DDRA = 0;
 	DDRD |= (1 << PORTD1);
 	USART_Init();
+	
+	TIMSK |= (1 << OCIE1A);	//Enable TIMER1_COMPA interrupt
+	
+	OCR1A = 0x30D4;			//Comparison A (800ms)
+	
 	sei();
 	
 	while(1){
-		PORTB = USART_Read();
-		_delay_ms(500);
-		PORTB = 0;
+		while(PINA & (1 << REC)){
+			PORTB = USART_Read();
+		}
+		while(PINA & (1 << PLAY)){
+			USART_Write(0x64);
+			USART_Write(0x90);
+			USART_Write(0x45);
+			PORTB = 0x45;
+			_delay_ms(1000);
+			USART_Write(0x40);
+			USART_Write(0x80);
+			USART_Write(0x45);
+			PORTB = 0x45;
+		}
 	}
 
 	return 0;
