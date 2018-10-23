@@ -1,13 +1,13 @@
 #include <io.h>
 #include <avr/interrupt.h>
 #include <avr/portpins.h>
-#include <avr/delay.h>
+#include <util/delay.h>
 
 #define REC 	PINA0		//PINA0 = Record Switch
 #define PLAY	PINA1		//PINA1 = Playback Switch
-#define F_CPU 	4000000
+#define F_CLK 	4000000
 #define BAUD	31250
-#define UBRR	(F_CPU/16/BAUD)-1
+#define UBRR	(F_CLK/16/BAUD)-1
 
 
 ISR(TIMER1_COMPA_vect)	//Interrupt for TCNT1=OCR1A=0.8ms
@@ -49,7 +49,7 @@ int main(void)
 	DDRA = 0;
 	DDRD |= (1 << PORTD1);
 	USART_Init();
-	
+	TCCR1B |= (1 << CS12);
 	TIMSK |= (1 << OCIE1A);	//Enable TIMER1_COMPA interrupt
 	
 	OCR1A = 0x30D4;			//Comparison A (800ms)
@@ -58,7 +58,9 @@ int main(void)
 	
 	while(1){
 		while(PINA & (1 << REC)){
+			USART_Read();
 			PORTB = USART_Read();
+			USART_Read();
 		}
 		while(PINA & (1 << PLAY)){
 			USART_Write(0x64);
