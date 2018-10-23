@@ -140,7 +140,12 @@ int main(void)
     DDRD |= (1 << PORTD1);
     TCCR1B |= (1 << CS12);        //Timer1A prescale by 256
     USART_Init();            //Initialize the USART with Baud Rate 31,250bps
-    sei();
+    ////Timer Interrupt Setup////
+	TIMSK |= (1 << OCIE1A);	//Enable TIMER1_COMPA interrupt
+	TIMSK |= (1 << OCIE1B);	//Enable TIMER1_COMPB interrupt
+	OCR1A = 0x30D4;			//Comparison A (800ms)
+	OCR1B = 0xF424;			//Comparison B (4s)
+	sei();
 	unsigned char data;
 	
 	
