@@ -50,7 +50,6 @@ unsigned char USART_Flush(void)
 	while(UCSRA & (1 << RXC)){
 		flushData = UDR;
 	}
-	PORTB = UDR;
 	return flushData;
 }
 
@@ -59,8 +58,9 @@ unsigned char USART_Read(void)
 	//Wait for the recieve to complete
 	while(!(UCSRA & (1 << RXC))){
 		if(!(PINA & (1 << REC))){
-			UCSRB &= ~(1 << RXEN);
+			//UCSRB &= ~(1 << RXEN);
 			//return USART_Flush();
+			break;
 		} 
 	}
 	//Return what was recieved
@@ -70,7 +70,7 @@ unsigned char USART_Read(void)
 void USART_Write(unsigned char data)
 {
 	//Wait for the Transmit Buffer to empty
-	while(!(UCSRA & (1 << UDRE)))
+	while(!(UCSRA & (1 << UDRE)));
 	//Move the Data into the Transmit Buffer
 	UDR = data;
 
