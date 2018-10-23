@@ -114,27 +114,24 @@ int main(void)
 	unsigned char data;
 	
     while(1){
-		//If Recording
+		//Record Mode
 		if(PINA & (1 << REC)){
 			
-			//Write to EEPROM Data from USART
-			EEPROM_Write(0x0,USART_Read()); 
+			//Prevent Playback from overriding Record
+			while(PINA & (1 << REC)){
+				
+			}
 			
 		}
-		//If Playing
-		if(PINA & (1 << PLAY)){
+		//Prevent Record from overriding Playback
+		while(PINA & (1 << PLAY)){
 			
-			
-			//Read Data from EEPROM
-			data = EEPROM_Read(0x0);
-			//If Modify is on
+			//Modify Mode
 			if(PINA & (1 << MOD)){
 				
 			}
-			//Transmit Data
-			USART_Write(data);
-		
 		}
+		PORTB = 0;
 	}
     return 0;
 }
