@@ -12,6 +12,8 @@
 #define BAUD	31250			//Define Baud Rate
 #define UBRR	(F_CLK/16/BAUD)-1	//Cacluate UBRR Value
 
+unsigned int writeAddr, readAddr;
+
 void USART_Init()
 {
 	UCSRC = 0;
@@ -110,11 +112,12 @@ void record(void)
 	EEPROM_Write(writeAddr+2, USART_Read());
 	writeAddr = 3;
 
-	while((memAddr < 0x3FD)&&(PINA & (1 << REC)))						//1kB of memory
+	uint8_t temp, interval;
+	while((writeAddr < 0x3FD)&&(PINA & (1 << REC)))						//1kB of memory
 	{
 		//store interval between notes
 		//then store next note
-		uint8_t temp = USART_Read();
+		temp = USART_Read();
 		interval = (TCNT1>>8);
 		EEPROM_Write(writeAddr, interval);
 		EEPROM_Write(writeAddr+1, temp);
@@ -134,7 +137,7 @@ int main(void)
     USART_Init();            //Initialize the USART with Baud Rate 31,250bps
     sei();
 	unsigned char data;
-	unsigned int writeAddr, readAddr;
+	
 	
     while(1){
 		//Record Mode
