@@ -109,7 +109,7 @@ int main(void)
     DDRB = 0xFF;                //Set PORTB as output
     DDRD |= (1 << PORTD1);
     TCCR1B |= (1 << CS12);        //Timer1A prescale by 256
-    USART_Init(0x7);            //Initialize the USART with Baud Rate 31,250bps
+    USART_Init();            //Initialize the USART with Baud Rate 31,250bps
     sei();
 	unsigned char data;
 	unsigned int writeAddr, readAddr;
