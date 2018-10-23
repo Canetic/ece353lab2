@@ -14,6 +14,17 @@
 
 unsigned int writeAddr, readAddr;
 
+ISR(TIMER1_COMPA_vect)	//Interrupt for TCNT1=OCR1A=0.8ms
+{
+	PORTB = 0;		//Turn LEDS off
+}
+
+ISR(TIMER1_COMPB_vect)	//Interrupt for TCNT1=OCR1B=4s
+{
+	writeAddr = 0x3FF;		//Exit record mode
+	TCNT1 = 0;			//Reset TIMER1
+}
+
 void USART_Init()
 {
 	UCSRC = 0;
