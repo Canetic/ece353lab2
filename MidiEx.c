@@ -122,9 +122,9 @@ void record(void)
 	EEPROM_Write(writeAddr, USART_Read());		//Read initial note
 	noteCode = USART_Read();			//Store the note code
 	EEPROM_Write(writeAddr+1, note);		
-	EEPROM_Write(writeAddr+2, USART_Read());	//
-	PORTB = note;
-	writeAddr = 3;
+	EEPROM_Write(writeAddr+2, USART_Read());	//Store the velocity
+	PORTB = note;					//Display the note code
+	writeAddr = 3;					//Move to the next note
 
 	uint8_t temp, interval;
 	while((writeAddr < 0x3FD)&&(PINA & (1 << REC)))						//1kB of memory
