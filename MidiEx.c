@@ -107,9 +107,12 @@ int ReadADC(unsigned int ch)
 
 void record(void)
 {
+	uint8_t note;
 	EEPROM_Write(writeAddr, USART_Read());		//Read initial note
-	EEPROM_Write(writeAddr+1, USART_Read());
+	note = USART_Read();
+	EEPROM_Write(writeAddr+1, note);
 	EEPROM_Write(writeAddr+2, USART_Read());
+	PORTB = note;
 	writeAddr = 3;
 
 	uint8_t temp, interval;
@@ -121,8 +124,10 @@ void record(void)
 		interval = (TCNT1>>8);
 		EEPROM_Write(writeAddr, interval);
 		EEPROM_Write(writeAddr+1, temp);
-		EEPROM_Write(writeAddr+2, USART_Read());
+		note = USART_Read();
+		EEPROM_Write(writeAddr+2, note);
 		EEPROM_Write(writeAddr+3, USART_Read());
+		PORTB = note;
 		writeAddr+=4;
 		TCNT1 = 0x0;						//reset timer
 	}
