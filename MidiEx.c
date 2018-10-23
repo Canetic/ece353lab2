@@ -43,7 +43,6 @@ unsigned char USART_Flush(void)
 
 unsigned char USART_Read(void)
 {
-	UCSRB |= (1 << RXEN);
 	//Wait for the recieve to complete
 	while(!(UCSRA & (1 << RXC))){
 		if(!(PINA & (1 << REC))){
@@ -57,7 +56,6 @@ unsigned char USART_Read(void)
 
 void USART_Write(unsigned char data)
 {
-	UCSRB |= (1 << TXEN);
 	//Wait for the Transmit Buffer to empty
 	while(!(UCSRA & (1 << UDRE)))
 	//Move the Data into the Transmit Buffer
@@ -105,6 +103,28 @@ int ReadADC(unsigned int ch)
 	return (ADC);
 }
 
+void record(void)
+{
+	EEPROM_Write(writeAddr, USART_Read());		//Read initial note
+	EEPROM_Write(writeAddr+1, USART_Read());
+	EEPROM_Write(writeAddr+2, USART_Read());
+	writeAddr = 3;
+
+	while((memAddr < 0x3FD)&&(PINA & (1 << REC)))						//1kB of memory
+	{
+		//store interval between notes
+		//then store next note
+		uint8_t temp = USART_Read();
+		interval = (TCNT1>>8);
+		EEPROM_Write(writeAddr, interval);
+		EEPROM_Write(writeAddr+1, temp);
+		EEPROM_Write(writeAddr+2, USART_Read());
+		EEPROM_Write(writeAddr+3, USART_Read());
+		writeAddr+=4;
+		TCNT1 = 0x0;						//reset timer
+	}
+}
+
 int main(void)
 {
     DDRA = 0;                    //Set PortA as input    
@@ -121,10 +141,7 @@ int main(void)
 		if(PINA & (1 << REC)){
 			writeAddr = 0;
 			//Prevent Playback from overriding Record
-			while(PINA & (1 << REC)){
-				
-			}
-			
+			record();
 		}
 	    	readAddr = 0;
 		//Prevent Record from overriding Playback
