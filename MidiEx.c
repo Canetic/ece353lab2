@@ -43,6 +43,7 @@ unsigned char USART_Flush(void)
 
 unsigned char USART_Read(void)
 {
+	UCSRB |= (1 << RXEN);
 	//Wait for the recieve to complete
 	while(!(UCSRA & (1 << RXC))){
 		if(!(PINA & (1 << REC))){
@@ -56,6 +57,7 @@ unsigned char USART_Read(void)
 
 void USART_Write(unsigned char data)
 {
+	UCSRB |= (1 << TXEN);
 	//Wait for the Transmit Buffer to empty
 	while(!(UCSRA & (1 << UDRE)))
 	//Move the Data into the Transmit Buffer
