@@ -29,7 +29,6 @@ USART_Init()
 
 unsigned char USART_Read(void)
 {
-	PORTB = 0xFF;
 	while(!(UCSRA & (1 << RXC)));
 
 	return UDR;
