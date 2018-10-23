@@ -112,17 +112,19 @@ int main(void)
     USART_Init(0x7);            //Initialize the USART with Baud Rate 31,250bps
     sei();
 	unsigned char data;
+	unsigned int writeAddr, readAddr;
 	
     while(1){
 		//Record Mode
 		if(PINA & (1 << REC)){
-			
+			writeAddr = 0;
 			//Prevent Playback from overriding Record
 			while(PINA & (1 << REC)){
 				
 			}
 			
 		}
+	    	readAddr = 0;
 		//Prevent Record from overriding Playback
 		while(PINA & (1 << PLAY)){
 			
@@ -130,8 +132,9 @@ int main(void)
 			if(PINA & (1 << MOD)){
 				
 			}
+			readAddr = (readAddr > writeAddr) ? 0 : readAddr+1;
 		}
-		PORTB = 0;
+		
 	}
     return 0;
 }
