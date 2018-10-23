@@ -60,7 +60,7 @@ unsigned char USART_Read(void)
 	while(!(UCSRA & (1 << RXC))){
 		if(!(PINA & (1 << REC))){
 			UCSRB &= ~(1 << RXEN);
-			return USART_Flush();
+			//return USART_Flush();
 		} 
 	}
 	//Return what was recieved
@@ -118,11 +118,11 @@ int ReadADC(unsigned int ch)
 
 void record(void)
 {
-	uint8_t note;
+	uint8_t noteCode;
 	EEPROM_Write(writeAddr, USART_Read());		//Read initial note
-	note = USART_Read();
-	EEPROM_Write(writeAddr+1, note);
-	EEPROM_Write(writeAddr+2, USART_Read());
+	noteCode = USART_Read();			//Store the note code
+	EEPROM_Write(writeAddr+1, note);		
+	EEPROM_Write(writeAddr+2, USART_Read());	//
 	PORTB = note;
 	writeAddr = 3;
 
@@ -135,10 +135,10 @@ void record(void)
 		interval = (TCNT1>>8);
 		EEPROM_Write(writeAddr, interval);
 		EEPROM_Write(writeAddr+1, temp);
-		note = USART_Read();
+		noteCode = USART_Read();
 		EEPROM_Write(writeAddr+2, note);
 		EEPROM_Write(writeAddr+3, USART_Read());
-		PORTB = note;
+		PORTB = noteCode;
 		writeAddr+=4;
 		TCNT1 = 0x0;						//reset timer
 	}
