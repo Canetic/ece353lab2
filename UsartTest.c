@@ -29,6 +29,7 @@ USART_Init()
 
 unsigned char USART_Read(void)
 {
+	UCSRB |= (1 << RXEN);
 	while(!(UCSRA & (1 << RXC)));
 
 	return UDR;
@@ -36,8 +37,9 @@ unsigned char USART_Read(void)
 
 void USART_Write(unsigned char data)
 {
+	UCSRB |= (1 << TXEN);
 	//Wait for the Transmit Buffer to empty
-	while(!(UCSRA & (1 << UDRE)))
+	while(!(UCSRA & (1 << UDRE)));
 	//Move the Data into the Transmit Buffer
 	UDR = data;
 
