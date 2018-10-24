@@ -12,7 +12,9 @@
 #define BAUD	31250			//Define Baud Rate
 #define UBRR	(F_CLK/16/BAUD)-1	//Cacluate UBRR Value
 
-unsigned int writeAddr, readAddr;
+unsigned int writeAddr, readAddr, recording, interval;
+uint8_t status, note, vel;
+float modLight, ambLight;
 
 ISR(TIMER1_COMPA_vect)	//Interrupt for TCNT1=OCR1A=0.8ms
 {
@@ -21,7 +23,7 @@ ISR(TIMER1_COMPA_vect)	//Interrupt for TCNT1=OCR1A=0.8ms
 
 ISR(TIMER1_COMPB_vect)	//Interrupt for TCNT1=OCR1B=4s
 {
-	writeAddr = 0x3FF;		//Exit record mode
+	recording = 0;		//Exit record mode
 	TCNT1 = 0;			//Reset TIMER1
 }
 
@@ -56,8 +58,7 @@ void USART_Flush(void)
 unsigned char USART_Read(void)
 {
 	//Wait for the recieve to complete
-	while(!(UCSRA & (1 << RXC)) && (PINA & (1 << REC)));
-	
+	while(!(UCSRA & (1 << RXC))&&(PINA &(1<<REC)));
 	//Return what was recieved
 	return UDR;
 }
@@ -94,7 +95,7 @@ int ReadADC(unsigned int ch)
 	ADMUX=(1<<REFS0);
 
 	// Selects prescaler division factor to 32
-	ADCSRA=(1<<ADEN)|(7<<ADPS0);
+	ADCSRA=(1<<ADEN)|(5<<ADPS0);
 
 	// Selects ADC channel
 	ADMUX|=ch;
@@ -113,29 +114,61 @@ int ReadADC(unsigned int ch)
 
 void record(void)
 {
-	uint8_t noteCode;
+	USART_Flush();
+	writeAddr = 0;
 	EEPROM_Write(writeAddr, USART_Read());		//Read initial note
-	noteCode = USART_Read();			//Store the note code
-	EEPROM_Write(writeAddr+1, note);		
-	EEPROM_Write(writeAddr+2, USART_Read());	//Store the velocity
-	PORTB = note;					//Display the note code
-	writeAddr = 3;					//Move to the next note
+	note = USART_Read();
+	EEPROM_Write(writeAddr+1, note);
+	EEPROM_Write(writeAddr+2, USART_Read());
+	TCNT1 = 0;
+	PORTB = note;
+	writeAddr = 3;
 
-	uint8_t temp, interval;
-	while((writeAddr < 0x3FD)&&(PINA & (1 << REC)))						//1kB of memory
+	recording = 1;
+	while((writeAddr < 0x3FD)&&(PINA & (1 << REC))&&recording)						//1kB of memory
 	{
-		//store interval between notes
-		//then store next note
-		temp = USART_Read();
-		interval = (TCNT1>>8);
-		EEPROM_Write(writeAddr, interval);
-		EEPROM_Write(writeAddr+1, temp);
-		noteCode = USART_Read();
-		EEPROM_Write(writeAddr+2, note);
-		EEPROM_Write(writeAddr+3, USART_Read());
-		PORTB = noteCode;
-		writeAddr+=4;
-		TCNT1 = 0x0;						//reset timer
+		status = USART_Read();	//read status, note, and velocity frames
+		note = USART_Read();
+		vel = USART_Read();		
+		interval = TCNT1;
+		EEPROM_Write(writeAddr, (interval>>8));		//write upper half of interval
+		EEPROM_Write(writeAddr+1, interval);			//write lower half
+		EEPROM_Write(writeAddr+2, status);
+		EEPROM_Write(writeAddr+3, note);
+		EEPROM_Write(writeAddr+4, vel);
+		PORTB = note;								//display note on LEDS
+		writeAddr+=5;								//increment index
+		TCNT1 = 0;									//reset clock
+	}
+	EEPROM_Write(writeAddr-3, 0xFF);
+	EEPROM_Write(writeAddr-2, 0xFF);
+	EEPROM_Write(writeAddr-1, 0xFF);
+}
+
+void playback()
+{
+	readAddr = 0;
+	while(PINA & (1 << PLAY))
+	{
+		if(PINA & (1 << MOD))
+		{
+			modLight = ReadADC(PHRES1);
+			modLight *= modLight;
+		} else {
+			modLight = ambLight;
+		}
+
+		status = EEPROM_Read(readAddr);		//read from eeprom
+		note = EEPROM_Read(readAddr+1);
+		vel = EEPROM_Read(readAddr+2);
+		interval = (EEPROM_Read(readAddr+3)<<8)+EEPROM_Read(readAddr+4);
+		if(status & note & vel){break;}			//stop EEPROM read at the end of recording
+		USART_Write(status);					//transmit to midiox
+		USART_Write(note);
+		USART_Write(vel);
+		PORTB = note;
+		_delay_ms(((float) interval)/15.0*ambLight/modLight);			//0x0 to 0xF4 maps from 0 to 4s
+		readAddr += 5;
 	}
 }
 
@@ -152,24 +185,18 @@ int main(void)
 	OCR1A = 0x30D4;			//Comparison A (800ms)
 	OCR1B = 0xF424;			//Comparison B (4s)
 	sei();
-	unsigned char data;
-	
+	ambLight = ReadADC(PHRES1);
+	ambLight *= ambLight;
 	
     while(1){
 		//Record Mode
 		if(PINA & (1 << REC)){
-			writeAddr = 0;
-			//Prevent Playback from overriding Record
 			record();
 		}
-	    	readAddr = 0;
-		//Playback Mode
+		//Prevent Record from overriding Playback
 		if(PINA & (1 << PLAY)){
-			
-			//Modify Mode
-			if(PINA & (1 << MOD)){
-				
-			}
+			playback();
+			//if(PINA & (1 << MOD))
 		}
 		
 	}
