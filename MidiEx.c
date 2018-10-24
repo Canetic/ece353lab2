@@ -10,7 +10,7 @@
 #define PHRES2	PINA6	//PINA6 = Photoresistor 2
 #define F_CLK 	4000000			//Define Clock Speed
 #define BAUD	31250			//Define Baud Rate
-#define UBRR	(F_CLK/16/BAUD)-1	//Cacluate UBRR Value
+#define UBRR	(F_CLK/16/BAUD)-1	//Calcuate UBRR Value
 
 unsigned int writeAddr, readAddr, recording, interval;
 uint8_t status, note, vel;
@@ -116,10 +116,12 @@ void record(void)
 {
 	USART_Flush();
 	writeAddr = 0;
-	EEPROM_Write(writeAddr, USART_Read());		//Read initial note
+	status = USART_Read();		//Read initial note
 	note = USART_Read();
+	vel = USART_Read();
+	EEPROM_Write(writeAddr, status);	
 	EEPROM_Write(writeAddr+1, note);
-	EEPROM_Write(writeAddr+2, USART_Read());
+	EEPROM_Write(writeAddr+2, vel);
 	TCNT1 = 0;
 	PORTB = note;
 	writeAddr = 3;
@@ -193,10 +195,9 @@ int main(void)
 		if(PINA & (1 << REC)){
 			record();
 		}
-		//Prevent Record from overriding Playback
+		//Playback Mode
 		if(PINA & (1 << PLAY)){
 			playback();
-			//if(PINA & (1 << MOD))
 		}
 		
 	}
