@@ -116,15 +116,15 @@ void record(void)
 {
 	USART_Flush();
 	writeAddr = 0;
-	status = USART_Read();		//Read initial note
+	status = USART_Read();		//Read initial note to begin the recording
 	note = USART_Read();
 	vel = USART_Read();
-	EEPROM_Write(writeAddr, status);	
+	EEPROM_Write(writeAddr, status);	//writing into EEPROM status, note, vel 
 	EEPROM_Write(writeAddr+1, note);
 	EEPROM_Write(writeAddr+2, vel);
-	TCNT1 = 0;
-	PORTB = note;
-	writeAddr = 3;
+	TCNT1 = 0;				//Reset Clock
+	PORTB = note;				//Display note on LED
+	writeAddr = 3;				//Incrementing Index
 
 	recording = 1;
 	while((writeAddr < 0x3FD)&&(PINA & (1 << REC))&&recording)						//1kB of memory
@@ -138,11 +138,11 @@ void record(void)
 		EEPROM_Write(writeAddr+2, status);
 		EEPROM_Write(writeAddr+3, note);
 		EEPROM_Write(writeAddr+4, vel);
-		PORTB = note;								//display note on LEDS
+		PORTB = note;								//display note on LED
 		writeAddr+=5;								//increment index
 		TCNT1 = 0;									//reset clock
 	}
-	EEPROM_Write(writeAddr-3, 0xFF);
+	EEPROM_Write(writeAddr-3, 0xFF);		//To have 3 0XFF to determine when to loop recording
 	EEPROM_Write(writeAddr-2, 0xFF);
 	EEPROM_Write(writeAddr-1, 0xFF);
 }
@@ -150,27 +150,30 @@ void record(void)
 void playback()
 {
 	readAddr = 0;
+	//when play is turned on 
 	while(PINA & (1 << PLAY))
 	{
+		//determine if mod will be on or not
 		if(PINA & (1 << MOD))
 		{
-			modLight = ReadADC(PHRES1);
-			modLight *= modLight;
+			modLight = ReadADC(PHRES1);	//if mod is on then constantly get new modlight values for the delay_ms
+			modLight *= modLight;		//Modlight is squared to increase the speed difference when shing and lowering light levels
 		} else {
+			// if mod is off
 			modLight = ambLight;
 		}
 
-		status = EEPROM_Read(readAddr);		//read from eeprom
-		note = EEPROM_Read(readAddr+1);
-		vel = EEPROM_Read(readAddr+2);
-		interval = (EEPROM_Read(readAddr+3)<<8)+EEPROM_Read(readAddr+4);
+		status = EEPROM_Read(readAddr);		//read from eeprom STATUS
+		note = EEPROM_Read(readAddr+1);		//read from eeprom DATA1
+		vel = EEPROM_Read(readAddr+2);		//read from eeprom DATA2
+		interval = (EEPROM_Read(readAddr+3)<<8)+EEPROM_Read(readAddr+4); //calculating the interval between notes
 		if(status & note & vel){break;}			//stop EEPROM read at the end of recording
 		USART_Write(status);					//transmit to midiox
-		USART_Write(note);
-		USART_Write(vel);
-		PORTB = note;
+		USART_Write(note);				//transmit to midiox
+		USART_Write(vel);				//transmit to midiox
+		PORTB = note;					//LED reading note from EEPROM DATA1
 		_delay_ms(((float) interval)/15.0*ambLight/modLight);			//0x0 to 0xF4 maps from 0 to 4s
-		readAddr += 5;
+		readAddr += 5;					//Index for the playback
 	}
 }
 
@@ -178,7 +181,7 @@ int main(void)
 {
     DDRA = 0;                    //Set PortA as input    
     DDRB = 0xFF;                //Set PORTB as output
-    DDRD |= (1 << PORTD1);
+    DDRD |= (1 << PORTD1);	// Setting PortD1 as output
     TCCR1B |= (1 << CS12);        //Timer1A prescale by 256
     USART_Init();            //Initialize the USART with Baud Rate 31,250bps
     ////Timer Interrupt Setup////
@@ -186,9 +189,9 @@ int main(void)
 	TIMSK |= (1 << OCIE1B);	//Enable TIMER1_COMPB interrupt
 	OCR1A = 0x30D4;			//Comparison A (800ms)
 	OCR1B = 0xF424;			//Comparison B (4s)
-	sei();
-	ambLight = ReadADC(PHRES1);
-	ambLight *= ambLight;
+	sei();				//Initialize interrupt function
+	ambLight = ReadADC(PHRES1);	//Initialize the current light value for the delay_ms algorithm
+	ambLight *= ambLight;		//Square ambLight to get a bigger difference when shining and lowering light levels
 	
     while(1){
 		//Record Mode
