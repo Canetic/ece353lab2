@@ -161,6 +161,7 @@ int main(void)
 	OCR1B = 0xF424;			//Comparison B (4s)
 	sei();
 	unsigned char data;
+	int roomtempLight = ReadADC(PINA7);
 	
 	
     while(1){
@@ -180,6 +181,7 @@ int main(void)
 		if(PINA & (1 << PLAY)){
 			uint8_t data1, data2, data3;
 			unsigned int interval;
+			float dummy;
 			//UCSRB &= ~(1 << RXEN);
 			while(PINA & (1 << PLAY))
 			{
@@ -192,7 +194,21 @@ int main(void)
 				USART_Write(data2);
 				USART_Write(data3);
 				PORTB = data2;
-				_delay_ms(interval/0xF);			//0x0 to 0xF4 maps from 0 to 4s
+				//_delay_ms(interval/0xF);			//0x0 to 0xF4 maps from 0 to 4s
+				if(PINA & (1 << MOD))
+				{
+					dummy = ReadADC(PINA7);
+				}
+				else
+				{
+					dummy = roomtempLight;
+				}
+				while(0)
+				{
+					PORTB = (roomtempLight)/(ReadADC(PINA7));
+					_delay_ms(500);
+				}
+				_delay_ms(( (float)(interval/15.0)*roomtempLight*roomtempLight)/dummy/dummy);
 				readAddr += 5;
 			}
 			//Modify Mode
@@ -205,4 +221,3 @@ int main(void)
 	}
     return 0;
 }
-
