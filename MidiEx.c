@@ -43,14 +43,14 @@ void USART_Init()
 	UBRRL |= (unsigned char)(UBRR);
 }
 
-unsigned char USART_Flush(void)
+void USART_Flush(void)
 {
 	unsigned char flushData;
 	//Flush Data from Recieve Register))
 	while(UCSRA & (1 << RXC)){
 		flushData = UDR;
 	}
-	return flushData;
+	
 }
 
 unsigned char USART_Read(void)
