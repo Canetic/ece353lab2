@@ -161,8 +161,9 @@ int main(void)
 	OCR1B = 0xF424;			//Comparison B (4s)
 	sei();
 	unsigned char data;
+	int pitch, modLight2;
 	int roomtempLight = ReadADC(PINA7);
-	
+	int ambLight2 = ReadADC(PHRES2);
 	
     while(1){
 		//Record Mode
@@ -198,6 +199,12 @@ int main(void)
 				if(PINA & (1 << MOD))
 				{
 					dummy = ReadADC(PINA7);
+					modLight2 = ReadADC(PHRES2);
+					pitch = 0x2000 + ambLight2 - (2*modLight2);
+					pitch = pitch << 2;
+					USART_Write(0xE0);
+					USART_Write(pitch << 7);
+					USART_Write(pitch);
 				}
 				else
 				{
