@@ -163,14 +163,13 @@ int main(void)
 			record();
 		}
 	    	readAddr = 0;
-		//Prevent Record from overriding Playback
-		while(PINA & (1 << PLAY)){
+		//Playback Mode
+		if(PINA & (1 << PLAY)){
 			
 			//Modify Mode
 			if(PINA & (1 << MOD)){
 				
 			}
-			readAddr = (readAddr > writeAddr) ? 0 : readAddr+1;
 		}
 		
 	}
