@@ -56,13 +56,8 @@ void USART_Flush(void)
 unsigned char USART_Read(void)
 {
 	//Wait for the recieve to complete
-	while(!(UCSRA & (1 << RXC))){
-		if(!(PINA & (1 << REC))){
-			//UCSRB &= ~(1 << RXEN);
-			//return USART_Flush();
-			break;
-		} 
-	}
+	while(!(UCSRA & (1 << RXC)) && (PINA & (1 << REC)));
+	
 	//Return what was recieved
 	return UDR;
 }
