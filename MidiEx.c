@@ -1,3 +1,7 @@
+/*
+ * Lab Members: O-Dom Pin, Timothy Shum, Angus Mo, Karl Shao
+ */
+
 #include <io.h>
 #include <avr/interrupt.h>
 #include <avr/portpins.h>
